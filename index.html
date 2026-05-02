@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<!-- saved from url=(0049)file:///C:/Users/Kim/Downloads/pdf-reader_12.html -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>LECTO PDF</title>
+<script src="./index_files/pdf.min.js.다운로드"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ac:#d4a843;--ac2:#f0cc7a;
+  --bg:#0a0a0a;--sf:#161616;--sf2:#222;--sf3:#2e2e2e;
+  --b:rgba(255,255,255,0.08);--b2:rgba(255,255,255,0.14);
+  --tx:#f0f0f0;--tx2:#999;--tx3:#555;
+  --red:#ff4444;
+  --sbot:env(safe-area-inset-bottom,0px);
+  --stop:env(safe-area-inset-top,0px);
+}
+html,body{height:100%;overflow:hidden;background:#000;position:fixed;width:100%;}
+body{font-family:-apple-system,sans-serif;color:var(--tx);display:flex;flex-direction:column;padding-top:var(--stop);}
+
+/* TOP BAR */
+.topbar{height:52px;background:var(--bg);border-bottom:1px solid var(--b2);display:flex;align-items:center;padding:0 10px;gap:2px;flex-shrink:0;}
+.brand{font-size:15px;font-weight:800;color:var(--ac);letter-spacing:.05em;padding:0 4px;flex-shrink:0;display:flex;align-items:center;gap:4px;}
+.brand svg{width:12px;height:12px;}
+.vdiv{width:1px;height:26px;background:var(--b2);margin:0 4px;flex-shrink:0;}
+.sp{flex:1;}
+
+.tbtn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:8px;border:none;background:transparent;color:var(--tx2);cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.tbtn:active{background:var(--sf2);}
+.tbtn svg{width:17px;height:17px;pointer-events:none;}
+.tbtn:disabled{opacity:.25;pointer-events:none;}
+
+.pg-grp{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.pg-inp{width:44px;height:30px;background:var(--sf2);border:1.5px solid var(--b2);border-radius:7px;color:var(--tx);text-align:center;font-size:14px;font-weight:700;outline:none;-webkit-tap-highlight-color:transparent;}
+.pg-inp:focus{border-color:var(--ac);}
+.pg-tot{font-size:12px;color:var(--tx2);}
+
+.back-btn{display:none;align-items:center;gap:4px;height:30px;padding:0 10px;border-radius:8px;border:none;background:var(--ac);color:#111;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.back-btn.on{display:flex;}
+.back-btn:active{opacity:.7;}
+
+/* 파일 열기 — label이 input을 감싸는 방식 (모든 브라우저 호환) */
+.file-label{
+  display:inline-flex;align-items:center;justify-content:center;
+  height:32px;padding:0 12px;border-radius:8px;
+  background:var(--ac);color:#111;
+  font-size:13px;font-weight:700;
+  cursor:pointer;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  /* position:relative + overflow:hidden 으로 input이 label 안에 완전히 포함 */
+  position:relative;overflow:hidden;
+}
+.file-label:active{opacity:.7;}
+.file-label input[type=file]{
+  /* input을 label 크기에 딱 맞게 덮어씌움 */
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  opacity:0;cursor:pointer;
+  /* font-size 크게 설정 — 일부 구형 iOS 대응 */
+  font-size:16px;
+}
+
+/* VIEWER */
+.viewer{flex:1;overflow:auto;background:#3a3a3a;display:flex;flex-direction:column;align-items:flex-start;-webkit-overflow-scrolling:touch;position:relative;}
+.viewer.narrow{align-items:center;}
+
+.drop{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:32px;}
+.drop.gone{display:none;}
+.drop svg{opacity:.25;}
+.drop h2{font-size:22px;font-weight:700;color:var(--tx);}
+.drop p{font-size:14px;color:var(--tx2);line-height:1.7;}
+/* 드롭존 안 큰 버튼도 동일 label 방식 */
+.drop-label{
+  display:inline-flex;align-items:center;justify-content:center;
+  height:52px;padding:0 32px;border-radius:14px;
+  background:var(--ac);color:#111;
+  font-size:16px;font-weight:700;
+  cursor:pointer;margin-top:4px;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  position:relative;overflow:hidden;
+}
+.drop-label:active{opacity:.7;}
+.drop-label input[type=file]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;}
+
+.pw{position:relative;flex-shrink:0;box-shadow:0 4px 24px rgba(0,0,0,.8);}
+.pw canvas{display:block;}
+.link-layer{position:absolute;inset:0;pointer-events:none;}
+.pdf-lnk{position:absolute;pointer-events:all;cursor:pointer;border-radius:2px;touch-action:manipulation;}
+.pdf-lnk:active{background:rgba(80,150,255,.3);}
+
+/* BOTTOM BAR */
+.botbar{background:var(--bg);border-top:1px solid var(--b2);display:flex;align-items:center;justify-content:space-around;flex-shrink:0;height:calc(54px + var(--sbot));padding-bottom:var(--sbot);}
+.bbtn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--tx2);font-size:10px;font-weight:500;cursor:pointer;min-width:54px;min-height:48px;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.bbtn svg{width:22px;height:22px;pointer-events:none;}
+.bbtn:active{color:var(--tx);}
+.bbtn.active{color:var(--ac);}
+
+/* PANEL */
+.panel-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);}
+.panel-overlay.on{display:block;}
+.side-panel{position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--b2);z-index:201;height:55vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);}
+.side-panel.on{transform:translateY(0);}
+.panel-tabs{display:flex;border-bottom:1px solid var(--b2);flex-shrink:0;}
+.panel-tab{flex:1;height:44px;background:transparent;border:none;color:var(--tx2);font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.panel-tab.on{color:var(--ac);border-bottom-color:var(--ac);}
+.panel-body{display:none;flex:1;overflow-y:auto;flex-direction:column;}
+.panel-body.on{display:flex;}
+
+/* 썸네일 */
+.thumb-list{padding:8px;display:flex;flex-direction:column;gap:6px;}
+.t-item{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;cursor:pointer;border:1.5px solid transparent;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.t-item.on{border-color:var(--ac);background:rgba(212,168,67,.08);}
+.t-item:active{background:var(--sf2);}
+.t-cv-wrap{flex-shrink:0;width:72px;border-radius:4px;overflow:hidden;background:var(--sf2);}
+.t-cv{width:100%;display:block;}
+.t-pg{font-size:13px;font-weight:600;color:var(--tx2);}
+.t-item.on .t-pg{color:var(--ac2);}
+
+/* 북마크 */
+.bm-toolbar{display:flex;justify-content:flex-end;padding:10px 14px 6px;flex-shrink:0;}
+.bm-add-btn{height:34px;padding:0 14px;border-radius:9px;border:none;background:var(--ac);color:#111;font-size:13px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.bm-add-btn:active{opacity:.7;}
+.bm-scroll{flex:1;overflow-y:auto;padding:0 10px 10px;}
+.bm-empty{padding:32px;text-align:center;color:var(--tx3);font-size:14px;line-height:1.8;}
+.bm-item{display:flex;align-items:center;gap:12px;padding:13px 10px;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.bm-item:active{background:var(--sf2);}
+.bm-dot{width:9px;height:9px;border-radius:50%;background:var(--ac);flex-shrink:0;}
+.bm-info{flex:1;min-width:0;}
+.bm-name{font-size:14px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bm-pg{font-size:12px;color:var(--tx2);margin-top:2px;}
+.bm-del{background:none;border:none;color:var(--tx3);font-size:20px;padding:4px 8px;cursor:pointer;touch-action:manipulation;flex-shrink:0;line-height:1;}
+.bm-del:active{color:var(--red);}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(68px + var(--sbot));left:50%;transform:translateX(-50%);background:var(--sf2);border:1px solid var(--b2);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--tx2);display:flex;align-items:center;gap:8px;z-index:300;opacity:0;pointer-events:none;transition:opacity .2s;max-width:min(380px,90vw);}
+.toast.on{opacity:1;pointer-events:all;}
+.toast a{color:var(--ac2);text-decoration:none;word-break:break-all;font-weight:500;}
+.toast-x{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:18px;padding:2px 6px;touch-action:manipulation;flex-shrink:0;}
+
+.loading{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;}
+.loading.on{display:flex;}
+.spin{width:36px;height:36px;border:3px solid rgba(255,255,255,.12);border-top-color:var(--ac2);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 10 10" fill="currentColor"><polygon points="5,0 10,10 0,10"></polygon></svg>
+    LECTO
+  </div>
+  <div class="vdiv"></div>
+  <!-- 뒤로/앞으로 -->
+  <button class="tbtn" id="btnBk" disabled="">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9,4 4,10 9,16"></polyline><line x1="4" y1="10" x2="17" y2="10"></line></svg>
+  </button>
+  <button class="tbtn" id="btnFw" disabled="">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="11,4 16,10 11,16"></polyline><line x1="16" y1="10" x2="3" y2="10"></line></svg>
+  </button>
+  <div class="vdiv"></div>
+  <!-- 이전/다음 페이지 + 입력 -->
+  <button class="tbtn" id="btnPv" disabled="">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="12,4 6,10 12,16"></polyline></svg>
+  </button>
+  <div class="pg-grp">
+    <input class="pg-inp" type="number" id="pgInp" min="1" value="1" inputmode="numeric">
+    <span class="pg-tot">/<span id="totPg">-</span></span>
+  </div>
+  <button class="tbtn" id="btnNx" disabled="">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="8,4 14,10 8,16"></polyline></svg>
+  </button>
+  <div class="sp"></div>
+  <!-- 이전위치 (링크 이동 후에만 표시) -->
+  <button class="back-btn" id="btnBack">
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6,2 2,7 6,12"></polyline><line x1="2" y1="7" x2="12" y2="7"></line></svg>
+    이전위치
+  </button>
+  <!-- 파일 열기: label이 input을 감싸는 방식 -->
+  <label class="file-label">
+    열기
+    <input type="file" id="fi" accept=".pdf">
+  </label>
+</div>
+
+<!-- VIEWER -->
+<div class="viewer" id="viewer">
+  <div class="drop" id="drop">
+    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 12 15 15"></polyline>
+    </svg>
+    <h2>PDF 파일을 여세요</h2>
+    <p>위의 열기를 탭하거나<br>파일을 드래그하세요</p>
+    <label class="drop-label">
+      PDF 선택하기
+      <input type="file" id="fi2" accept=".pdf">
+    </label>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="botbar">
+  <button class="bbtn" id="bbPanel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="3"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+    패널
+  </button>
+  <button class="bbtn" id="bbBM">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 3h14v19l-7-4-7 4V3z"></path></svg>
+    북마크
+  </button>
+  <button class="bbtn" id="bbZO">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><line x1="16" y1="16" x2="21" y2="21"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+    축소
+  </button>
+  <button class="bbtn" id="bbZI">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><line x1="16" y1="16" x2="21" y2="21"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+    확대
+  </button>
+</div>
+
+<!-- 통합 패널 -->
+<div class="panel-overlay" id="panelOv"></div>
+<div class="side-panel" id="sidePanel">
+  <div class="panel-tabs">
+    <button class="panel-tab on" data-tab="thumbs">썸네일</button>
+    <button class="panel-tab" data-tab="bmarks">북마크</button>
+  </div>
+  <div class="panel-body on" id="tab-thumbs">
+    <div class="thumb-list" id="thumbList"></div>
+  </div>
+  <div class="panel-body" id="tab-bmarks">
+    <div class="bm-toolbar">
+      <button class="bm-add-btn" id="bmAdd">+ 현재 페이지 추가</button>
+    </div>
+    <div class="bm-scroll" id="bmScroll"></div>
+  </div>
+</div>
+
+<!-- 외부 링크 토스트 -->
+<div class="toast" id="toast">
+  <a id="toastUrl" href="file:///C:/Users/Kim/Downloads/pdf-reader_12.html#" target="_blank" rel="noopener noreferrer"></a>
+  <button class="toast-x" id="toastX">✕</button>
+</div>
+
+<div class="loading" id="ld"><div class="spin"></div></div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let pdf=null, curPg=1, scale=1.0, curFile='';
+let backStack=[];
+let navH=[], navI=-1;
+let bookmarks=JSON.parse(localStorage.getItem('lecto-bm')||'[]');
+let thumbsDone=false;
+
+const viewer=document.getElementById('viewer');
+const pgInp=document.getElementById('pgInp');
+
+// ── 파일 열기 ──
+function handleFile(f){
+  if(!f)return;
+  document.getElementById('ld').classList.add('on');
+  const r=new FileReader();
+  r.onload=ev=>loadPDF(ev.target.result, f.name);
+  r.readAsArrayBuffer(f);
+}
+document.getElementById('fi').addEventListener('change', e=>{
+  const f=e.target.files[0];
+  e.target.value='';  // 먼저 초기화해도 files[0]은 이미 변수에 저장됨
+  handleFile(f);
+});
+document.getElementById('fi2').addEventListener('change', e=>{
+  const f=e.target.files[0];
+  e.target.value='';
+  handleFile(f);
+});
+viewer.addEventListener('dragover', e=>e.preventDefault());
+viewer.addEventListener('drop', e=>{
+  e.preventDefault();
+  handleFile(e.dataTransfer.files[0]);
+});
+
+// ── PDF 로드 ──
+async function loadPDF(data, name){
+  try{
+    pdf=await pdfjsLib.getDocument({data}).promise;
+    curFile=name;
+    backStack=[]; navH=[]; navI=-1; thumbsDone=false;
+    updBack(); updNav();
+    document.getElementById('totPg').textContent=pdf.numPages;
+    pgInp.max=pdf.numPages;
+    document.getElementById('drop').classList.add('gone');
+    const vp0=(await pdf.getPage(1)).getViewport({scale:1});
+    scale=Math.floor(viewer.clientWidth/vp0.width*20)/20;
+    await renderPg(1, true);
+  }catch(e){
+    alert('오류: '+e.message);
+  }
+  document.getElementById('ld').classList.remove('on');
+}
+
+// ── 페이지 렌더 ──
+async function renderPg(num, addH){
+  if(!pdf)return;
+  curPg=num;
+  pgInp.value=num;
+  document.getElementById('btnPv').disabled=num<=1;
+  document.getElementById('btnNx').disabled=num>=pdf.numPages;
+  document.querySelectorAll('.t-item').forEach(el=>
+    el.classList.toggle('on', parseInt(el.dataset.page)===num)
+  );
+  if(addH){
+    navH=navH.slice(0,navI+1);
+    if(!navH.length||navH[navH.length-1]!==num){
+      navH.push(num); navI=navH.length-1;
+    }
+    updNav();
+  }
+  const page=await pdf.getPage(num);
+  const vp=page.getViewport({scale});
+  viewer.querySelectorAll('.pw').forEach(el=>el.remove());
+  const pw=document.createElement('div');
+  pw.className='pw';
+  pw.style.width=vp.width+'px';
+  pw.style.height=vp.height+'px';
+  const cv=document.createElement('canvas');
+  cv.width=vp.width; cv.height=vp.height;
+  pw.appendChild(cv);
+  const lkL=document.createElement('div');
+  lkL.className='link-layer';
+  pw.appendChild(lkL);
+  viewer.appendChild(pw);
+  await page.render({canvasContext:cv.getContext('2d'), viewport:vp}).promise;
+  await renderLinks(page, lkL, vp);
+  viewer.classList.toggle('narrow', vp.width<viewer.clientWidth);
+  viewer.scrollTo({top:0, left:0});
+}
+
+// ── 링크 렌더 ──
+async function renderLinks(page, layer, vp){
+  const anns=await page.getAnnotations();
+  anns.forEach(ann=>{
+    if(ann.subtype!=='Link'||!ann.rect)return;
+    const[x1,y1,x2,y2]=pdfjsLib.Util.normalizeRect(
+      vp.convertToViewportRectangle(ann.rect)
+    );
+    const el=document.createElement('div');
+    el.className='pdf-lnk';
+    el.style.left=Math.min(x1,x2)+'px';
+    el.style.top=Math.min(y1,y2)+'px';
+    el.style.width=Math.abs(x2-x1)+'px';
+    el.style.height=Math.abs(y2-y1)+'px';
+    if(ann.url||ann.unsafeUrl){
+      const url=ann.url||ann.unsafeUrl;
+      el.addEventListener('click', e=>{e.stopPropagation(); showToast(url);});
+    } else if(ann.dest||(ann.action&&ann.action.dest)){
+      el.addEventListener('click', async e=>{
+        e.stopPropagation();
+        try{
+          let d=ann.dest||(ann.action&&ann.action.dest);
+          if(typeof d==='string') d=await pdf.getDestination(d);
+          if(!d)return;
+          const pi=await pdf.getPageIndex(d[0]);
+          backStack.push(curPg); updBack();
+          renderPg(pi+1, true);
+        }catch{}
+      });
+    } else return;
+    layer.appendChild(el);
+  });
+}
+
+// ── 이전위치 ──
+document.getElementById('btnBack').addEventListener('click', ()=>{
+  if(!backStack.length)return;
+  renderPg(backStack.pop(), false);
+  updBack();
+});
+function updBack(){
+  document.getElementById('btnBack').classList.toggle('on', backStack.length>0);
+}
+
+// ── 뒤로/앞으로 ──
+document.getElementById('btnBk').addEventListener('click', ()=>{
+  if(navI<=0)return; navI--; renderPg(navH[navI], false); updNav();
+});
+document.getElementById('btnFw').addEventListener('click', ()=>{
+  if(navI>=navH.length-1)return; navI++; renderPg(navH[navI], false); updNav();
+});
+function updNav(){
+  document.getElementById('btnBk').disabled=navI<=0;
+  document.getElementById('btnFw').disabled=navI>=navH.length-1;
+}
+
+// ── 페이지 네비 ──
+document.getElementById('btnPv').addEventListener('click', ()=>{if(curPg>1)renderPg(curPg-1,true);});
+document.getElementById('btnNx').addEventListener('click', ()=>{if(pdf&&curPg<pdf.numPages)renderPg(curPg+1,true);});
+pgInp.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    const n=parseInt(pgInp.value);
+    if(pdf&&n>=1&&n<=pdf.numPages) renderPg(n,true);
+    pgInp.blur();
+  }
+});
+pgInp.addEventListener('blur', ()=>{
+  const n=parseInt(pgInp.value);
+  if(!pdf||isNaN(n)||n<1||n>pdf.numPages) pgInp.value=curPg;
+  else renderPg(n,true);
+});
+
+// ── 줌 ──
+document.getElementById('bbZI').addEventListener('click', ()=>{
+  if(!pdf)return;
+  scale=Math.min(4, Math.round((scale+0.25)*20)/20);
+  renderPg(curPg, false);
+});
+document.getElementById('bbZO').addEventListener('click', ()=>{
+  if(!pdf)return;
+  scale=Math.max(0.4, Math.round((scale-0.25)*20)/20);
+  renderPg(curPg, false);
+});
+
+// ── 패널 열기/닫기 ──
+function openPanel(tab){
+  if(!pdf)return;
+  document.getElementById('sidePanel').classList.add('on');
+  document.getElementById('panelOv').classList.add('on');
+  document.getElementById('bbPanel').classList.add('active');
+  switchTab(tab||'thumbs');
+}
+function closePanel(){
+  document.getElementById('sidePanel').classList.remove('on');
+  document.getElementById('panelOv').classList.remove('on');
+  document.getElementById('bbPanel').classList.remove('active');
+  document.getElementById('bbBM').classList.remove('active');
+}
+function switchTab(name){
+  document.querySelectorAll('.panel-tab').forEach(t=>
+    t.classList.toggle('on', t.dataset.tab===name)
+  );
+  document.querySelectorAll('.panel-body').forEach(b=>
+    b.classList.toggle('on', b.id==='tab-'+name)
+  );
+  if(name==='thumbs'&&!thumbsDone) renderThumbs();
+  if(name==='bmarks') renderBMs();
+}
+
+document.getElementById('bbPanel').addEventListener('click', ()=>{
+  document.getElementById('sidePanel').classList.contains('on')
+    ? closePanel() : openPanel('thumbs');
+});
+document.getElementById('bbBM').addEventListener('click', ()=>{
+  const isOpen=document.getElementById('sidePanel').classList.contains('on');
+  const isBM=document.getElementById('tab-bmarks').classList.contains('on');
+  if(isOpen&&isBM){ closePanel(); }
+  else{ openPanel('bmarks'); document.getElementById('bbBM').classList.add('active'); }
+});
+document.getElementById('panelOv').addEventListener('click', closePanel);
+document.querySelectorAll('.panel-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>switchTab(tab.dataset.tab));
+});
+
+// ── 썸네일 ──
+async function renderThumbs(){
+  const list=document.getElementById('thumbList');
+  list.innerHTML='';
+  for(let i=1;i<=pdf.numPages;i++){
+    const item=document.createElement('div');
+    item.className='t-item'+(i===curPg?' on':'');
+    item.dataset.page=i;
+    const wrap=document.createElement('div'); wrap.className='t-cv-wrap';
+    const pg=document.createElement('div'); pg.className='t-pg'; pg.textContent=i+'페이지';
+    item.appendChild(wrap); item.appendChild(pg);
+    item.addEventListener('click', ()=>{ renderPg(i,true); closePanel(); });
+    list.appendChild(item);
+  }
+  for(let i=1;i<=pdf.numPages;i++){
+    try{
+      const p=await pdf.getPage(i);
+      const vp=p.getViewport({scale:0.22});
+      const cv=document.createElement('canvas');
+      cv.className='t-cv'; cv.width=vp.width; cv.height=vp.height;
+      await p.render({canvasContext:cv.getContext('2d'), viewport:vp}).promise;
+      const item=list.querySelector('[data-page="'+i+'"]');
+      if(item) item.querySelector('.t-cv-wrap').appendChild(cv);
+    }catch{}
+  }
+  thumbsDone=true;
+}
+
+// ── 북마크 ──
+function saveBM(){ localStorage.setItem('lecto-bm', JSON.stringify(bookmarks)); }
+
+function renderBMs(){
+  const scroll=document.getElementById('bmScroll');
+  const mine=bookmarks.filter(b=>b.file===curFile);
+  if(!mine.length){
+    scroll.innerHTML='<div class="bm-empty">북마크가 없습니다<br><span style="font-size:12px;color:var(--tx3)">+ 현재 페이지 추가 버튼으로 저장하세요</span></div>';
+    return;
+  }
+  scroll.innerHTML='';
+  [...mine].sort((a,b)=>a.page-b.page).forEach(bm=>{
+    const item=document.createElement('div');
+    item.className='bm-item';
+    item.innerHTML=
+      '<div class="bm-dot"></div>'
+      +'<div class="bm-info">'
+        +'<div class="bm-name">'+bm.title+'</div>'
+        +'<div class="bm-pg">'+bm.page+'페이지</div>'
+      +'</div>'
+      +'<button class="bm-del">✕</button>';
+    item.querySelector('.bm-del').addEventListener('click', e=>{
+      e.stopPropagation();
+      const idx=bookmarks.indexOf(bm);
+      if(idx>-1){ bookmarks.splice(idx,1); saveBM(); renderBMs(); }
+    });
+    item.addEventListener('click', ()=>{ renderPg(bm.page,true); closePanel(); });
+    scroll.appendChild(item);
+  });
+}
+
+document.getElementById('bmAdd').addEventListener('click', ()=>{
+  if(!pdf){ return; }
+  const already=bookmarks.find(b=>b.file===curFile&&b.page===curPg);
+  if(already){
+    if(confirm(curPg+'페이지 북마크를 삭제할까요?')){
+      bookmarks.splice(bookmarks.indexOf(already),1);
+      saveBM(); renderBMs();
+    }
+    return;
+  }
+  bookmarks.push({file:curFile, page:curPg, title:'페이지 '+curPg});
+  saveBM(); renderBMs();
+  // 추가 피드백
+  const btn=document.getElementById('bmAdd');
+  const orig=btn.textContent;
+  btn.textContent='✓ 추가됨';
+  btn.style.cssText='background:#3a3;color:#fff;';
+  setTimeout(()=>{ btn.textContent=orig; btn.style.cssText=''; }, 1500);
+});
+
+// ── 토스트 ──
+let ttimer;
+function showToast(url){
+  const t=document.getElementById('toast');
+  const a=document.getElementById('toastUrl');
+  a.href=url;
+  a.textContent=url.length>48 ? url.slice(0,46)+'...' : url;
+  t.classList.add('on');
+  clearTimeout(ttimer);
+  ttimer=setTimeout(()=>t.classList.remove('on'), 5000);
+}
+document.getElementById('toastX').addEventListener('click', ()=>
+  document.getElementById('toast').classList.remove('on')
+);
+
+window.addEventListener('resize', ()=>{ if(pdf) renderPg(curPg, false); });
+</script>
+
+
+</body></html>
