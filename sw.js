@@ -1,4 +1,4 @@
-const CACHE = 'lecto-v1';
+const CACHE = 'lecto-v25';
 const ASSETS = [
   '/LECTO/',
   '/LECTO/index.html',
